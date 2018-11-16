@@ -23,6 +23,10 @@ class App extends React.Component<{}, IState> {
 			uploadFileList: null
 		}     	
 		this.selectNewMeme = this.selectNewMeme.bind(this)
+		this.fetchMemes = this.fetchMemes.bind(this)
+		this.fetchMemes("")
+		this.handleFileUpload = this.handleFileUpload.bind(this)
+		this.uploadMeme = this.uploadMeme.bind(this)
 	}
 
 	public render() {
@@ -41,8 +45,7 @@ class App extends React.Component<{}, IState> {
 						<MemeDetail currentMeme={this.state.currentMeme} />
 					</div>
 					<div className="col-5">
-						<MemeList memes={this.state.memes} selectNewMeme={this.selectNewMeme} searchByTag={this.methodNotImplemented}/>
-					</div>
+						<MemeList memes={this.state.memes} selectNewMeme={this.selectNewMeme} searchByTag={this.fetchMemes}/>					</div>
 				</div>
 			</div>
 			<Modal open={open} onClose={this.onCloseModal}>
@@ -59,18 +62,13 @@ class App extends React.Component<{}, IState> {
 					</div>
 					<div className="form-group">
 						<label>Image</label>
-						<input type="file" onChange={this.methodNotImplemented} className="form-control-file" id="meme-image-input" />
+						<input type="file" onChange={this.handleFileUpload} className="form-control-file" id="meme-image-input" />
 					</div>
-
-					<button type="button" className="btn" onClick={this.methodNotImplemented}>Upload</button>
+					<button type="button" className="btn" onClick={this.uploadMeme}>Upload</button>
 				</form>
 			</Modal>
 		</div>
 		);
-	}
-
-	private methodNotImplemented() {
-		alert("Method not implemented")
 	}
 
 	// Modal open
@@ -89,6 +87,69 @@ class App extends React.Component<{}, IState> {
 			currentMeme: newMeme
 		})
 	}
+
+	// Fetch new meme
+	private fetchMemes(tag: any) {
+		let url = "http://phase2apitest.azurewebsites.net/api/meme"
+		if (tag !== "") {
+			url += "/tag?=" + tag
+		}
+		fetch(url, {
+			method: 'GET'
+		})
+		.then(res => res.json())
+		.then(json => {
+			let currentMeme = json[0]
+			if (currentMeme === undefined) {
+				currentMeme = {"id":0, "title":"No memes (╯°□°）╯︵ ┻━┻","url":"","tags":"try a different tag","uploaded":"","width":"0","height":"0"}
+			}
+			this.setState({
+				currentMeme,
+				memes: json
+			})
+		});
+	}
+
+	// Handle File uploads
+	private handleFileUpload(fileList: any) {
+    this.setState({
+        uploadFileList: fileList.target.files
+    })
+	}
+
+	// Upload meme
+	private uploadMeme() {
+    const titleInput = document.getElementById("meme-title-input") as HTMLInputElement
+    const tagInput = document.getElementById("meme-tag-input") as HTMLInputElement
+    const imageFile = this.state.uploadFileList[0]
+
+    if (titleInput === null || tagInput === null || imageFile === null) {
+        return;
+    }
+
+    const title = titleInput.value
+    const tag = tagInput.value
+    const url = "http://phase2apitest.azurewebsites.net/api/meme/upload"
+
+    const formData = new FormData()
+    formData.append("Title", title)
+    formData.append("Tags", tag)
+    formData.append("image", imageFile)
+
+    fetch(url, {
+        body: formData,
+        headers: {'cache-control': 'no-cache'},
+        method: 'POST'
+    })
+    .then((response : any) => {
+        if (!response.ok) {
+            // Error State
+            alert(response.statusText)
+        } else {
+            location.reload()
+        }
+    })
+}
 }
 
 export default App;
