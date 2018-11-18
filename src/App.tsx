@@ -90,7 +90,7 @@ class App extends React.Component<{}, IState> {
 
 	// Fetch new meme
 	private fetchMemes(tag: any) {
-		let url = "http://phase2apitest.azurewebsites.net/api/meme"
+		let url = "https://phase2apitest.azurewebsites.net/api/meme"
 		if (tag !== "") {
 			url += "/tag?=" + tag
 		}
